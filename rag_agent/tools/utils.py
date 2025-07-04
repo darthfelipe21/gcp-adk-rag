@@ -14,76 +14,76 @@ logger = logging.getLogger(__name__)
 
 def get_corpus_resource_name(corpus_name: str) -> str:
     """
-    Convert a corpus name to its full resource name if needed.
-    Handles various input formats and ensures the returned name follows Vertex AI's requirements.
+    Convierte el nombre de un corpus en el nombre completo de su recurso si es necesario.
+    Administra varios formatos de entrada y garantiza que el nombre devuelto cumpla con los requisitos de Vertex AI.
 
     Args:
-        corpus_name (str): The corpus name or display name
+        corpus_name (str): Nombre del corpus
 
     Returns:
-        str: The full resource name of the corpus
+        str: Nombre completo del recurso del corpus
     """
     logger.info(f"Getting resource name for corpus: {corpus_name}")
 
-    # If it's already a full resource name with the projects/locations/ragCorpora format
+    # Si ya es un nombre de recurso completo con el formato proyectos/ubicaciones/ragCorpora
     if re.match(r"^projects/[^/]+/locations/[^/]+/ragCorpora/[^/]+$", corpus_name):
         return corpus_name
 
-    # Check if this is a display name of an existing corpus
+    # Comprobar si este es un nombre para mostrar de un corpus existente
     try:
-        # List all corpora and check if there's a match with the display name
+        # Enumerar todos los corpus y verifique si hay una coincidencia con el nombre para mostrar
         corpora = rag.list_corpora()
         for corpus in corpora:
             if hasattr(corpus, "display_name") and corpus.display_name == corpus_name:
                 return corpus.name
     except Exception as e:
         logger.warning(f"Error when checking for corpus display name: {str(e)}")
-        # If we can't check, continue with the default behavior
+        # Si no se puede comprobar, continuamos con el comportamiento predeterminado
         pass
 
-    # If it contains partial path elements, extract just the corpus ID
+    # Si contiene elementos de ruta parciales, extraer solo el ID del corpus
     if "/" in corpus_name:
-        # Extract the last part of the path as the corpus ID
+        # Extarer la ultima parte del path como el corpus ID
         corpus_id = corpus_name.split("/")[-1]
     else:
         corpus_id = corpus_name
 
-    # Remove any special characters that might cause issues
+    # Eliminar cualquier caracter especial que podria causar un problema
     corpus_id = re.sub(r"[^a-zA-Z0-9_-]", "_", corpus_id)
 
-    # Construct the standardized resource name
+    # Construir nombre de recurso estandarizado
     return f"projects/{PROJECT_ID}/locations/{LOCATION}/ragCorpora/{corpus_id}"
 
 
 def check_corpus_exists(corpus_name: str, tool_context: ToolContext) -> bool:
     """
-    Check if a corpus with the given name exists.
+    Verificair si el corpus indicado existe
 
     Args:
-        corpus_name (str): The name of the corpus to check
-        tool_context (ToolContext): The tool context for state management
+        corpus_name (str): Nombre del corpus a verificar
+        tool_context (ToolContext): Herramienta de contexto para administrar el estado
 
     Returns:
-        bool: True if the corpus exists, False otherwise
+        bool: True si el corpus existe de lo contrario False
     """
-    # Check state first if tool_context is provided
+    # Verificar el estado si tool_context fue provisto
     if tool_context.state.get(f"corpus_exists_{corpus_name}"):
         return True
 
     try:
-        # Get full resource name
+        # Obtener nombre del recurso completo
         corpus_resource_name = get_corpus_resource_name(corpus_name)
 
-        # List all corpora and check if this one exists
+        # Listar todos los corpora y verificar si este existe
         corpora = rag.list_corpora()
         for corpus in corpora:
             if (
                 corpus.name == corpus_resource_name
                 or corpus.display_name == corpus_name
             ):
-                # Update state
+                # Actualizar el estado
                 tool_context.state[f"corpus_exists_{corpus_name}"] = True
-                # Also set this as the current corpus if no current corpus is set
+                # Asignar el nuevo corpus como actual si es que no lo es
                 if not tool_context.state.get("current_corpus"):
                     tool_context.state["current_corpus"] = corpus_name
                 return True
@@ -91,22 +91,22 @@ def check_corpus_exists(corpus_name: str, tool_context: ToolContext) -> bool:
         return False
     except Exception as e:
         logger.error(f"Error checking if corpus exists: {str(e)}")
-        # If we can't check, assume it doesn't exist
+        # Si no puede verificar, se asume que no existe
         return False
 
 
 def set_current_corpus(corpus_name: str, tool_context: ToolContext) -> bool:
     """
-    Set the current corpus in the tool context state.
+    Asignar el nuevo corpus con el estado del tool context 
 
     Args:
-        corpus_name (str): The name of the corpus to set as current
-        tool_context (ToolContext): The tool context for state management
+        corpus_name (str): Nombre del corpus que sera el actual
+        tool_context (ToolContext): Herramienta de contexto para administrar el estado
 
     Returns:
-        bool: True if the corpus exists and was set as current, False otherwise
+        bool: True si el corpus existe de lo contrario False
     """
-    # Check if corpus exists first
+    # Verificar si el corpus existe
     if check_corpus_exists(corpus_name, tool_context):
         tool_context.state["current_corpus"] = corpus_name
         return True
