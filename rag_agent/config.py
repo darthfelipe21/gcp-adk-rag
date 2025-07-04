@@ -1,16 +1,7 @@
-"""
-Configuration settings for the RAG Agent.
-
-These settings are used by the various RAG tools.
-Vertex AI initialization is performed in the package's __init__.py
-"""
-
 import os
 
 from dotenv import load_dotenv
 
-# Load environment variables (this is redundant if __init__.py is imported first,
-# but included for safety when importing config directly)
 load_dotenv()
 
 # Vertex AI settings
