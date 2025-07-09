@@ -101,7 +101,7 @@ def add_data(
         corpus_resource_name = get_corpus_resource_name(corpus_name)
 
         # Configurar el chunking
-        transformation_config = rag.TrasnformationConfig(
+        transformation_config = rag.TransformationConfig(
             chunking_config=rag.ChunkingConfig(
             chunk_size=DEFAULT_CHUNK_SIZE,
             chunk_overlap=DEFAULT_CHUNK_OVERLAP,
