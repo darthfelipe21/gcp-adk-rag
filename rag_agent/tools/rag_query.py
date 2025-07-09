@@ -58,7 +58,7 @@ def rag_query(
                         ctx_group.source_name
                         if hasattr(ctx_group, "source_name") else ""
                     ),
-                    "text": ctx_group.source_display_name if hasattr(ctx_group, "text") else "",
+                    "text": ctx_group.text if hasattr(ctx_group, "text") else "",
                     "score": ctx_group.score if hasattr(ctx_group, "score") else 0.0
                 }
                 results.append(result)
